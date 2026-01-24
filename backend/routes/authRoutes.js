@@ -8,11 +8,9 @@ const router = express.Router();
 router.post(
   "/signup",
   upload.fields([
-    { name: "patientPdf", maxCount: 1 },              // patient identity
-    { name: "qualificationPdf", maxCount: 1 },        // doctor qualification
-    { name: "clinicRegistrationPdf", maxCount: 1 },   // clinic registration
-    { name: "aadhaarPdf", maxCount: 1 },              // doctor Aadhaar
-    { name: "licensePdf", maxCount: 1 },              // doctor license
+    { name: "profilePhoto", maxCount: 1 },
+    { name: "medicalLicense", maxCount: 1 },
+    { name: "identityProof", maxCount: 1 },            
   ]),
   signup
 );
