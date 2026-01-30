@@ -1,146 +1,150 @@
-/* LOGIN PAGE — TeleMed Theme */
-
-:root {
-  --tm-teal: #14b8a6;
-  --tm-teal-dark: #0f9f93;
-  --tm-teal-soft: #e0f7f4;
-
-  --tm-bg: #f9fafb;
-  --tm-dark: #111827;
-  --tm-muted: #6b7280;
-  --tm-border: #e5e7eb;
-
-  --tm-radius-lg: 22px;
-  --tm-radius-md: 14px;
-
-  --tm-shadow-soft: 0 24px 60px rgba(15, 23, 42, 0.08);
-
-  --tm-font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-}
-
-/* PAGE WRAPPER */
-.tm-login-page {
-  padding: 80px 7vw 120px;
-  background: #ffffff;
-  font-family: var(--tm-font-sans);
-  color: var(--tm-dark);
+/* Page background */
+.tm-auth-wrapper {
+  min-height: 100vh;
+  background: #e9fff6;
   display: flex;
+  align-items: center;
   justify-content: center;
 }
 
-/* LOGIN CARD */
-.tm-login-card {
-  width: 100%;
-  max-width: 460px;
-  background: #ffffff;
-  padding: 34px 34px 40px;
-  border-radius: var(--tm-radius-lg);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: var(--tm-shadow-soft);
-}
-
-/* TITLES */
-.tm-login-title {
-  font-size: 32px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.tm-login-subtitle {
-  margin-top: 8px;
-  text-align: center;
-  font-size: 15px;
-  color: var(--tm-muted);
-}
-
-/* FORM */
-.tm-login-form {
-  margin-top: 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.tm-login-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.tm-login-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #4b5563;
-}
-
-.tm-login-input {
-  padding: 12px 14px;
+/* Card */
+.tm-auth-card {
+  width: 420px;
+  background: #fff;
   border-radius: 14px;
-  border: 1px solid var(--tm-border);
-  background: #f9fafb;
-  font-size: 14px;
-  transition: border 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
-.tm-login-input:focus {
-  border-color: var(--tm-teal);
-  background: #ffffff;
-  outline: none;
-  box-shadow: 0 0 0 1px var(--tm-teal-soft);
-}
-
-.tm-login-input::placeholder {
-  color: #9ca3af;
-}
-
-/* BUTTON */
-.tm-login-btn {
-  padding: 12px 10px;
-  margin-top: 4px;
-  border-radius: 999px;
-  background: var(--tm-teal);
-  color: white;
-  border: none;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease;
-  box-shadow: 0 10px 30px rgba(20, 184, 166, 0.28);
-}
-
-.tm-login-btn:hover {
-  background: var(--tm-teal-dark);
-  transform: translateY(-2px);
-}
-
-.tm-login-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 6px 18px rgba(20, 184, 166, 0.25);
-}
-
-/* SWITCH TO SIGNUP */
-.tm-login-switch {
-  margin-top: 16px;
+/* Header */
+.tm-auth-header {
+  background: #009a63;
+  color: #fff;
+  padding: 25px 20px;
   text-align: center;
+}
+
+.tm-auth-header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.tm-auth-header p {
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* Steps */
+.tm-auth-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.step span {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.step.active {
+  color: #009a63;
+}
+
+.step.active span {
+  background: #009a63;
+  color: #fff;
+  border-color: #009a63;
+}
+
+.line {
+  width: 60px;
+  height: 2px;
+  background: #ddd;
+  margin: 0 10px;
+}
+
+/* Form */
+.tm-auth-form {
+  padding: 0 30px 25px;
+}
+
+.tm-form-group {
+  margin-bottom: 15px;
+}
+
+.tm-form-group label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.tm-form-group input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
   font-size: 14px;
-  color: var(--tm-muted);
 }
 
-.tm-login-switch button {
-  background: none;
+/* Error */
+.tm-error {
+  background: #ffe6e6;
+  color: #c62828;
+  padding: 8px;
+  font-size: 13px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* Button */
+.tm-primary-btn {
+  width: 100%;
+  padding: 12px;
+  background: #009a63;
   border: none;
-  color: var(--tm-teal);
-  font-weight: 600;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
   cursor: pointer;
+  margin-top: 10px;
 }
 
-/* RESPONSIVE */
-@media (max-width: 600px) {
-  .tm-login-card {
-    padding: 24px 22px 30px;
-  }
-  .tm-login-title {
-    font-size: 26px;
-  }
+.tm-primary-btn:hover {
+  background: #007f52;
+}
+
+.tm-primary-btn:disabled {
+  background: #9fd6c1;
+  cursor: not-allowed;
+}
+
+/* Footer */
+.tm-auth-footer {
+  text-align: center;
+  padding-bottom: 20px;
+  font-size: 13px;
+}
+
+.tm-auth-footer span {
+  color: #009a63;
+  cursor: pointer;
+  font-weight: 500;
 }

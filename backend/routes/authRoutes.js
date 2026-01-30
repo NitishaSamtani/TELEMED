@@ -1,5 +1,6 @@
 import express from "express";
 import upload from "../middleware/upload.js";
+import { protect } from "../middleware/authMiddleware.js";
 import { signup, login, getAllUsers } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -17,6 +18,13 @@ router.post(
 
 // LOGIN ROUTE
 router.post("/login", login);
+
+router.get("/profile", protect, (req, res) => {
+  res.json({
+    message: "Access granted",
+    user: req.user,
+  });
+});
 
 // ADMIN or internal route → GET all users
 router.get("/all", getAllUsers);
