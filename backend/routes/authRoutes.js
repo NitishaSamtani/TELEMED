@@ -1,5 +1,6 @@
 import express from "express";
 import upload from "../middleware/upload.js";
+import { protect } from "../middleware/authMiddleware.js";
 import { signup, login, getAllUsers } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -8,17 +9,22 @@ const router = express.Router();
 router.post(
   "/signup",
   upload.fields([
-    { name: "patientPdf", maxCount: 1 },              // patient identity
-    { name: "qualificationPdf", maxCount: 1 },        // doctor qualification
-    { name: "clinicRegistrationPdf", maxCount: 1 },   // clinic registration
-    { name: "aadhaarPdf", maxCount: 1 },              // doctor Aadhaar
-    { name: "licensePdf", maxCount: 1 },              // doctor license
+    { name: "profilePhoto", maxCount: 1 },
+    { name: "medicalLicense", maxCount: 1 },
+    { name: "identityProof", maxCount: 1 },            
   ]),
   signup
 );
 
 // LOGIN ROUTE
 router.post("/login", login);
+
+router.get("/profile", protect, (req, res) => {
+  res.json({
+    message: "Access granted",
+    user: req.user,
+  });
+});
 
 // ADMIN or internal route → GET all users
 router.get("/all", getAllUsers);

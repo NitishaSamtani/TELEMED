@@ -3,37 +3,38 @@ import path from "path";
 import fs from "fs";
 
 // Create uploads folder if missing
-const uploadsDir = path.resolve("uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+const uploadDir = path.resolve("uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Storage engine
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+    cb(null, uploadDir);
   },
+
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const randomName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, randomName);
-  }
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
 });
 
 // Allowed file types (PDF + Images)
 const fileFilter = (req, file, cb) => {
-  const isImage = file.mimetype.startsWith("image/");
-  const isPdf = file.mimetype === "application/pdf";
+  const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
 
-  if (isImage || isPdf) cb(null, true);
-  else cb(null, false);
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only JPG, PNG, and PDF files are allowed"), false);
+  }
 };
 
 // FINAL UPLOAD MIDDLEWARE
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB max
+  limits: { fileSize: 100 * 1024 * 1024 } // 10MB max
 });
 
 export default upload;

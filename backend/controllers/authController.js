@@ -1,91 +1,86 @@
 import Signup from "../models/Signup.js";
+import Patient from "../models/Patient.js";
+import Doctor from "../models/Doctor.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
 
 /* =====================================================
-    SIGNUP CONTROLLER (FOR PATIENT + DOCTOR)
+    SIGNUP CONTROLLER
 ===================================================== */
+
 export const signup = async (req, res) => {
   try {
-    const {
-      name,
-      phone,
-      email,
-      password,
-      role,
-      clinicName,
-    } = req.body;
+    const { name, email, password, role } = req.body;
 
+    // Basic validation
     if (!name || !email || !password || !role) {
-      return res.status(400).json({ msg: "Missing required fields" });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    // --- UNIQUE EMAIL VALIDATION ---
-    const exists = await Signup.findOne({ email });
-    if (exists) {
-      return res.status(400).json({ msg: "Email already exists" });
+    if (!["patient", "doctor"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
     }
 
-    // --- HASH PASSWORD ---
+    // Duplicate user check
+    const existingUser = await Signup.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "User already exists" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user object
-    const userData = {
+    // 1️⃣ Create USER (auth)
+    const user = await Signup.create({
       name,
-      phone,
       email,
       password: hashedPassword,
       role,
-      verified: role === "patient" ? true : false, // patient auto-login TRUE
-    };
+      isVerified: role === "patient",
+    });
 
-    /* ======================================================
-      PATIENT → Upload patientPdf
-    ====================================================== */
+    // 2️⃣ Create role-based profile
     if (role === "patient") {
-      if (req.files?.patientPdf?.[0]) {
-        userData.patientPdf = req.files.patientPdf[0].path;
-      }
+      await Patient.create({
+        userId: user._id,
+        name,
+        email,
+      });
     }
 
-    /* ======================================================
-      DOCTOR → Upload multiple PDFs + extra fields
-    ====================================================== */
     if (role === "doctor") {
-      userData.clinicName = clinicName || "";
-      userData.verified = false; // ❗ doctor must be verified by admin
-
-      if (req.files?.qualificationPdf?.[0])
-        userData.qualificationPdf = req.files.qualificationPdf[0].path;
-
-      if (req.files?.clinicRegistrationPdf?.[0])
-        userData.clinicRegistrationPdf =
-          req.files.clinicRegistrationPdf[0].path;
-
-      if (req.files?.aadhaarPdf?.[0])
-        userData.aadhaarPdf = req.files.aadhaarPdf[0].path;
-
-      if (req.files?.licensePdf?.[0])
-        userData.licensePdf = req.files.licensePdf[0].path;
+      await Doctor.create({
+        userId: user._id,
+        name,
+        email,
+        phone: req.body.phone || null,
+        qualification: req.body.qualification || null,
+        specialization: req.body.specialization || null,
+        experience: req.body.experience || null,
+        bio: req.body.bio || null,
+        languagesSpoken: req.body.languagesSpoken
+          ? JSON.parse(req.body.languagesSpoken)
+          : [],
+        availability: req.body.availability
+          ? JSON.parse(req.body.availability)
+          : [],
+        breakTime: req.body.breakTime
+          ? JSON.parse(req.body.breakTime)
+          : null,
+        profilePhoto: req.files?.profilePhoto?.[0]?.path || null,
+        medicalLicense: req.files?.medicalLicense?.[0]?.path || null,
+        identityProof: req.files?.identityProof?.[0]?.path || null,
+      });
     }
-
-    // --- SAVE USER ---
-    const newUser = await Signup.create(userData);
 
     return res.status(201).json({
-      msg: "Signup successful",
-      user: {
-        id: newUser._id,
-        email: newUser.email,
-        role: newUser.role,
-        verified: newUser.verified,
-      },
+      message: "Signup successful. Please login.",
     });
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ msg: "Server error" });
+
+  } catch (error) {
+    console.error("Signup Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -97,11 +92,14 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password)
+    if (!email || !password) {
       return res.status(400).json({ msg: "Email and password required" });
+    }
 
     const user = await Signup.findOne({ email });
-    if (!user) return res.status(400).json({ msg: "Invalid credentials" });
+    if (!user) {
+      return res.status(400).json({ msg: "Invalid credentials" });
+    }
 
     // Doctor cannot login until verified
     if (user.role === "doctor" && !user.verified) {
@@ -109,7 +107,9 @@ export const login = async (req, res) => {
     }
 
     const ok = await bcrypt.compare(password, user.password);
-    if (!ok) return res.status(400).json({ msg: "Invalid credentials" });
+    if (!ok) {
+      return res.status(400).json({ msg: "Invalid credentials" });
+    }
 
     // Create JWT token
     const token = jwt.sign(
@@ -133,7 +133,6 @@ export const login = async (req, res) => {
     return res.status(500).json({ msg: "Server error" });
   }
 };
-
 
 /* =====================================================
     GET ALL USERS (ADMIN PANEL)
