@@ -1,10 +1,18 @@
 import mongoose from "mongoose";
 
-const Signup = new mongoose.Schema(
+const signupSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true, 
+    name: { 
+      type: String, 
+      required: true 
+    },
+
+    email: { 
+      type: String, 
+      required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
       validate: {
         validator: function (email) {
           return (
@@ -13,26 +21,23 @@ const Signup = new mongoose.Schema(
             email.endsWith("@outlook.com")
           );
         },
-        message: props => `${props.value} is not a valid email!`, 
-     },
+        message: (props) => `${props.value} is not a valid email!`,
+      },
     },
 
-
-    password: { type: String, required: true },
+    password: { 
+      type: String, 
+      required: true 
+    },
 
     role: {
       type: String,
-      enum: ["patient", "doctor"],
+      enum: ["patient", "doctor", "admin"],   // ✅ admin added
       required: true,
-    },
-
-    isVerified: {
-      type: Boolean,
-      default: false, // only meaningful for doctors
     },
   },
   { timestamps: true }
 );
 
 // Explicit collection name: users
-export default mongoose.model("Signup", Signup, "users");
+export default mongoose.model("Signup", signupSchema, "users");

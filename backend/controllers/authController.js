@@ -7,14 +7,13 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
 
 /* =====================================================
-    SIGNUP CONTROLLER
+   SIGNUP CONTROLLER
 ===================================================== */
-
 export const signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // Basic validation
+    /* ---------- Basic Validation ---------- */
     if (!name || !email || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
@@ -23,24 +22,30 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "Invalid role" });
     }
 
-    // Duplicate user check
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    /* ---------- Duplicate Email Check ---------- */
     const existingUser = await Signup.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: "User already exists" });
     }
 
+    /* ---------- Hash Password ---------- */
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 1️⃣ Create USER (auth)
+    /* ---------- Create User (Authentication) ---------- */
     const user = await Signup.create({
       name,
       email,
       password: hashedPassword,
       role,
-      isVerified: role === "patient",
     });
 
-    // 2️⃣ Create role-based profile
+    /* ---------- Create Role-Based Profile ---------- */
     if (role === "patient") {
       await Patient.create({
         userId: user._id,
@@ -71,78 +76,106 @@ export const signup = async (req, res) => {
         profilePhoto: req.files?.profilePhoto?.[0]?.path || null,
         medicalLicense: req.files?.medicalLicense?.[0]?.path || null,
         identityProof: req.files?.identityProof?.[0]?.path || null,
+        isVerified: false, // 🔥 Doctor must be approved by admin
       });
     }
 
     return res.status(201).json({
-      message: "Signup successful. Please login.",
+      message: "Signup successful. Please wait for approval if doctor.",
     });
-
   } catch (error) {
     console.error("Signup Error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-
 /* =====================================================
-    LOGIN CONTROLLER
+   LOGIN CONTROLLER
 ===================================================== */
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    /* ---------- Basic Validation ---------- */
     if (!email || !password) {
-      return res.status(400).json({ msg: "Email and password required" });
+      return res.status(400).json({
+        message: "Email and password are required",
+      });
     }
 
+    /* ---------- Find User ---------- */
     const user = await Signup.findOne({ email });
     if (!user) {
-      return res.status(400).json({ msg: "Invalid credentials" });
+      return res.status(400).json({
+        message: "Invalid credentials",
+      });
     }
 
-    // Doctor cannot login until verified
-    if (user.role === "doctor" && !user.verified) {
-      return res.status(403).json({ msg: "Your account is not verified yet." });
+    /* ---------- Check Password ---------- */
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid credentials",
+      });
     }
 
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) {
-      return res.status(400).json({ msg: "Invalid credentials" });
+    /* ---------- Doctor Approval Check ---------- */
+    if (user.role === "doctor") {
+      const doctorProfile = await Doctor.findOne({ userId: user._id });
+
+      if (!doctorProfile) {
+        return res.status(403).json({
+          message: "Doctor profile not found.",
+        });
+      }
+
+      if (!doctorProfile.isVerified) {
+        return res.status(403).json({
+          message:
+            doctorProfile.rejectionReason
+              ? `Profile Disapproved: ${doctorProfile.rejectionReason}`
+              : "Your profile is under review.",
+        });
+      }
     }
 
-    // Create JWT token
+    /* ---------- Generate JWT ---------- */
     const token = jwt.sign(
       { id: user._id, role: user.role },
       JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    return res.json({
-      msg: "Login successful",
+    return res.status(200).json({
+      message: "Login successful",
       token,
       user: {
         id: user._id,
+        name: user.name,
         email: user.email,
         role: user.role,
-        verified: user.verified,
       },
     });
-  } catch (err) {
-    console.error("Login error:", err);
-    return res.status(500).json({ msg: "Server error" });
+  } catch (error) {
+    console.error("Login Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 
 /* =====================================================
-    GET ALL USERS (ADMIN PANEL)
+   GET ALL USERS (ADMIN ONLY)
 ===================================================== */
 export const getAllUsers = async (req, res) => {
   try {
     const users = await Signup.find().select("-password");
-    return res.json({ users });
-  } catch (err) {
-    console.error("Get users error:", err);
-    return res.status(500).json({ msg: "Server error" });
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error("Get Users Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };

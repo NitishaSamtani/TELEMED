@@ -41,8 +41,8 @@ const patientSchema = new mongoose.Schema(
     weight: { type: Number, default: null },
     hasChronicDisease: { type: Boolean, default: null},
     chronicDiseaseDetail: { type: String, default: null },
-    predictionDetail: { type: String, default: null, optional: true },
-    emergencyContact: { type: emergencyContactSchema, default: null, optional: true  },
+    predictionDetail: { type: String, default: null },
+    emergencyContact: { type: emergencyContactSchema, default: null },
   },
   { timestamps: true }
 );
