@@ -54,9 +54,20 @@ const Signup = () => {
   });
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    setFormData({ ...formData, [name]: files ? files[0] : value });
-  };
+  const { name, value, files } = e.target;
+
+  if (files) {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: files[0],
+    }));
+  } else {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+};
 
   const validateStep1 = () => {
     const { name, email, password, confirmPassword } = formData;
@@ -76,36 +87,38 @@ const Signup = () => {
     setStep(2);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
+  if (loading) return; // prevent double click
+
+  setError("");
+  setLoading(true);
+
+  try {
     const payload = new FormData();
 
-    payload.append("name", formData.name);
-    payload.append("email", formData.email);
+    payload.append("name", formData.name.trim());
+    payload.append("email", formData.email.trim());
     payload.append("password", formData.password);
     payload.append("role", formData.role);
 
     if (formData.role === "doctor") {
-      payload.append("phone", formData.phone);
-      payload.append("qualification", formData.qualification);
-      payload.append("specialization", formData.specialization);
+      payload.append("phone", formData.phone.trim());
+      payload.append("qualification", formData.qualification.trim());
+      payload.append("specialization", formData.specialization.trim());
       payload.append("experience", formData.experience);
-      payload.append("bio", formData.bio);
+      payload.append("bio", formData.bio.trim());
 
-      payload.append(
-        "languagesSpoken",
-        JSON.stringify(
-          formData.languagesSpoken
-            .split(",")
-            .map((l) => l.trim())
-            .filter(Boolean)
-        )
-      );
+      // Languages
+      const languages = formData.languagesSpoken
+        .split(",")
+        .map((l) => l.trim())
+        .filter(Boolean);
 
-      // Convert availability to backend format
+      payload.append("languagesSpoken", JSON.stringify(languages));
+
+      // Availability
       const formattedAvailability = Object.keys(availability)
         .filter((day) => availability[day].enabled)
         .map((day) => ({
@@ -123,34 +136,50 @@ const Signup = () => {
         JSON.stringify(formattedAvailability)
       );
 
-      payload.append("breakTime", JSON.stringify(breakTime));
+      payload.append(
+        "breakTime",
+        JSON.stringify({
+          startTime: breakTime.startTime,
+          endTime: breakTime.endTime,
+        })
+      );
 
       if (formData.profilePhoto)
         payload.append("profilePhoto", formData.profilePhoto);
+
       if (formData.medicalLicense)
         payload.append("medicalLicense", formData.medicalLicense);
+
       if (formData.identityProof)
         payload.append("identityProof", formData.identityProof);
     }
 
+    const res = await fetch("http://localhost:5000/api/auth/signup", {
+      method: "POST",
+      body: payload,
+    });
+
+    let data;
     try {
-      const res = await fetch("http://localhost:5000/api/auth/signup", {
-        method: "POST",
-        body: payload,
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-
-      navigate("/login", {
-        state: { success: "Account created successfully. Please login." },
-      });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      data = await res.json();
+    } catch {
+      throw new Error("Server error. Please try again.");
     }
-  };
+
+    if (!res.ok) {
+      throw new Error(data.message || "Signup failed");
+    }
+
+    navigate("/login", {
+      state: { success: "Account created successfully. Please login." },
+    });
+
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="signup-wrapper">
@@ -487,15 +516,15 @@ const Signup = () => {
                 <div className="button-group">
                   <button type="button" onClick={() => setStep(1)} className="btn-secondary">
                     Back
-                  </button>
+                      </button>
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={loading}
                     className="btn-primary"
-                  >
-                    {loading ? "Creating Account..." : "Create Account"}
-                  </button>
+          >
+                  {loading ? "Creating Account..." : "Create Account"}
+                </button>
                 </div>
               </div>
             )}

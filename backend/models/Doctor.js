@@ -26,43 +26,28 @@ const doctorSchema = new mongoose.Schema(
     },
 
     name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
 
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      validate: {
-        validator: function (email) {
-          return (
-            email.endsWith("@gmail.com") ||
-            email.endsWith("@yahoo.com") ||
-            email.endsWith("@outlook.com")
-          );
-        },
-        message: props => `${props.value} is not a valid email!`,
-      },
-    }, 
-
-    phone: { type: String, default: null },
-    qualification: { type: String, required: true },
     specialization: { type: String, required: true },
-    experience: { type: Number, default: null },
-    bio: { type: String, default: null },
 
-    languagesSpoken: { type: [String], default: [] },
+    qualification: { type: String },
+    experience: { type: Number },
+    bio: { type: String },
+    phone: { type: String },
+    languagesSpoken: [{ type: String }],
 
     availability: { type: [availabilitySchema], default: [] },
-
     breakTime: {
-      startTime: { type: String, default: null },
-      endTime: { type: String, default: null },
+      startTime: String,
+      endTime: String,
     },
 
-    profilePhoto: { type: String, required: true },
-    medicalLicense: { type: String, required: true },
-    identityProof: { type: String, required: true },
+    profilePhoto: { type: String },
+    medicalLicense: { type: String },
+    identityProof: { type: String },
 
     isVerified: { type: Boolean, default: false },
+    rejectionReason: { type: String, default: "" },
   },
   { timestamps: true }
 );
